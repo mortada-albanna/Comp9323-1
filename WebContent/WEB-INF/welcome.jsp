@@ -8,5 +8,7 @@
 </head>
 <body>
 Login Successful
+Welcome ${user }
+you have ${group } access
 </body>
 </html>
