@@ -1,8 +1,16 @@
 package apis;
 
+import interfaces.UserManagement;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import com.stormpath.sdk.account.Account;
+import com.stormpath.sdk.account.AccountList;
 import com.stormpath.sdk.application.AccountStoreMapping;
 import com.stormpath.sdk.application.Application;
 import com.stormpath.sdk.application.Applications;
@@ -13,17 +21,24 @@ import com.stormpath.sdk.client.ApiKeys;
 import com.stormpath.sdk.client.Client;
 import com.stormpath.sdk.client.Clients;
 import com.stormpath.sdk.directory.Directory;
+import com.stormpath.sdk.group.Group;
+import com.stormpath.sdk.group.GroupList;
+import com.stormpath.sdk.group.GroupStatus;
 import com.stormpath.sdk.resource.ResourceException;
 
 import controller.Controller;
 
 import java.util.logging.Logger;
 
-public class Stormpath {
+import other.Permission;
+
+public class Stormpath implements UserManagement{
 	static Logger logger = Logger.getLogger(Controller.class.getName());
 	private Client client = null;
 	private Application application = null;
-	private Directory directory = null;
+	private Directory directory = null;	
+	public static final String StudentGroup = "Student";
+	public static final String TeacherGroup = "Teacher";
 	
 	public Stormpath(){
 		String path = "C:\\Users\\Ervin\\Downloads\\apiKey.properties";
@@ -36,15 +51,17 @@ public class Stormpath {
 
 		initApplication();
 		initDirectory();
+		initAuthorizationGroups();
 
 	}
 	
-	public Account authenticateAccount(String user, String pass){
-		Account account = null;
+	public boolean authenticateAccount(String user, String pass){
+		boolean authenticated = false;
 		try {
 		    UsernamePasswordRequest authenticationRequest = new UsernamePasswordRequest(user, pass);
 		    AuthenticationResult result = application.authenticateAccount(authenticationRequest);
-		    account = result.getAccount();
+		    //account = result.getAccount();
+		    authenticated = true;
 		} catch (ResourceException ex) {
 		    System.out.println(ex.getStatus()); // Will output: 400
 		    System.out.println(ex.getCode()); // Will output: 400
@@ -53,15 +70,7 @@ public class Stormpath {
 		    System.out.println(ex.getMoreInfo()); // Will output: "mailto:support@stormpath.com"
 		}
 		
-		return account;
-	}
-	
-	public Application getApplication(){
-		return application;
-	}
-	
-	public Directory getDirectory(){
-		return directory;
+		return authenticated;
 	}
 
 	private void initDirectory() {
@@ -121,15 +130,6 @@ public class Stormpath {
 		}
 	}
 
-	public Client getClient() {
-		// TODO Auto-generated method stub
-		return client;
-	}
-
-	public void createAccount(Account newAccount) {
-		// TODO Auto-generated method stub
-		application.createAccount(newAccount);
-	}
 
 	public String getDetails(String username) {
 		// TODO Auto-generated method stub
@@ -163,4 +163,89 @@ public class Stormpath {
 
 		return found;
 	}
+
+	@Override
+	public void createAccount(String givenName, String surname, String username, 
+			String password, String email, String group) {
+		// TODO Auto-generated method stub
+		Account newAccount = client.instantiate(Account.class);
+		newAccount.setGivenName(givenName);
+		newAccount.setSurname(surname);
+		newAccount.setUsername(username);
+		newAccount.setPassword(password);
+		newAccount.setEmail(email);
+		
+		application.createAccount(newAccount);
+		addToGroup(newAccount, group);
+		
+	}
+	private void initAuthorizationGroups() {
+		// TODO Auto-generated method stub
+		boolean found = false;
+		GroupList groups = application.getGroups();
+		for(Group group : groups) {
+			System.out.println(group.getName());
+			if (group.getName().equals(StudentGroup) || group.getName().equals(TeacherGroup)){
+				found = true;
+			}
+		}
+		if (!found){
+			createGroup(StudentGroup, "authorization group for students");
+			createGroup(TeacherGroup, "authorization group for teachers");
+		}
+
+	}
+	
+	public void addToGroup(String acc, String groupName){
+		AccountList accounts = application.getAccounts();
+		for(Account account : accounts) {
+			if (account.getUsername().equals(acc)){
+				addToGroup(account, groupName);
+			}
+		}
+	}
+	
+	public void addToGroup(Account acc, String groupName){
+		GroupList groups = application.getGroups();
+		for(Group group : groups) {
+			System.out.println(group.getName());
+			if (group.getName().equals(groupName)){
+				acc.addGroup(group);
+				System.out.println("Successfully added to group");
+			}else{
+				System.out.println(group.getName() + " does not match " + groupName);
+				
+			}
+		}
+		
+	}
+
+	private void createGroup(String groupName, String description){
+		Group group = client.instantiate(Group.class)
+				.setName(groupName)
+				.setDescription(description)
+				.setStatus(GroupStatus.ENABLED);
+
+		application.createGroup(group);
+
+	}
+
+	@Override
+	public ArrayList<String> getAurhorizationGroup(String username) {
+		// TODO Auto-generated method stub
+		ArrayList<String> groupList = new ArrayList<String>();
+		AccountList accounts = application.getAccounts();
+		
+		for (Group group:searchAccount(username).getGroups()){
+			groupList.add(group.getName());
+		}
+		return groupList;
+	}
+
+	@Override
+	public ArrayList<Permission> getPermission(String user) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

@@ -1,6 +1,8 @@
 package controller;
 
 
+import interfaces.UserManagement;
+
 import java.io.IOException;
 
 import apis.Stormpath;
@@ -51,10 +53,7 @@ public class Controller extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	static Logger logger = Logger.getLogger(Controller.class.getName());
 
-	private Stormpath stormpath;
-	private Application application;
-	private Directory directory;
-	private Client client;
+	private UserManagement stormpath;
 
 	/**
 	 * @see HttpServlet#HttpServlet()
@@ -62,9 +61,6 @@ public class Controller extends HttpServlet {
 	public Controller() {
 		super();
 		stormpath = new Stormpath();
-		application = stormpath.getApplication();
-		directory = stormpath.getDirectory();
-		client = stormpath.getClient();
 
 		// TODO Auto-generated constructor stub
 	}
@@ -133,7 +129,7 @@ public class Controller extends HttpServlet {
 			HttpServletResponse response, HttpSession session) {
 		// TODO Auto-generated method stub
 		String forwardPage = null;
-		if (stormpath.authenticateAccount(request.getParameter("username"), request.getParameter("password")) != null){
+		if (stormpath.authenticateAccount(request.getParameter("username"), request.getParameter("password"))){
 			forwardPage = "WEB-INF/welcome.jsp";
 		}else{
 			forwardPage = "login.jsp";
@@ -149,23 +145,21 @@ public class Controller extends HttpServlet {
 		// TODO Auto-generated method stub
 
 		String forwardpage = null;
-		Account newAccount = client.instantiate(Account.class);
 
 		//Set the account properties
-		newAccount.setGivenName(request.getParameter("given_name"));
-		newAccount.setSurname(request.getParameter("surname"));
-		newAccount.setUsername(request.getParameter("email")); //optional, defaults to email if unset
-		newAccount.setEmail(request.getParameter("email"));
-		if (request.getParameter("password").equals(request.getParameter("password2"))){
-			newAccount.setPassword(request.getParameter("password"));
-			stormpath.createAccount(newAccount);
+		String givenName = request.getParameter("given_name");
+		String surname = request.getParameter("surname");
+		String userName = request.getParameter("email"); //optional, defaults to email if unset
+		String email = request.getParameter("email");
+		String password = request.getParameter("password");
+		String password2 = request.getParameter("password2");
+		if (password.equals(password2)){
+			stormpath.createAccount(givenName, surname, userName, password, email, "Student");
 			request.setAttribute("message", "Registration Successful!");
 			forwardpage = "login.jsp";
 		}else{
 			forwardpage = "createaccount.jsp";
 		}
-		CustomData customData = newAccount.getCustomData();
-		customData.put("favoriteColor", "white");
 
 
 		//Create the account using the existing Application object
