@@ -3,10 +3,14 @@ package controller;
 
 import interfaces.UserManagement;
 
+import java.io.File;
 import java.io.IOException;
 
+import apis.GoogleDrive;
 import apis.Stormpath;
 
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.http.FileContent;
 import com.stormpath.sdk.client.*;
 import com.stormpath.sdk.tenant.*;
 import com.stormpath.sdk.application.*;
@@ -26,16 +30,21 @@ import java.util.regex.Pattern;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.Part;
 
 import java.util.*;
 import javax.mail.*;
 import javax.mail.internet.*;
 import javax.activation.*;
+
+import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
+
 
 import com.stormpath.sdk.account.Account;
 import com.stormpath.sdk.application.Application;
@@ -49,11 +58,17 @@ import com.stormpath.sdk.directory.CustomData;
  * Servlet implementation class Controller
  */
 @WebServlet("/controller")
+@MultipartConfig(
+		fileSizeThreshold=1024*1024*10, // 10MB
+		maxFileSize=1024*1024*20,      // 20MB
+		maxRequestSize=1024*1024*50)   // 50MB
 public class Controller extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	static Logger logger = Logger.getLogger(Controller.class.getName());
 
 	private UserManagement stormpath;
+	private GoogleDrive googleDrive;
+	private static final String SAVE_DIR = "uploads";
 
 	/**
 	 * @see HttpServlet#HttpServlet()
@@ -61,6 +76,7 @@ public class Controller extends HttpServlet {
 	public Controller() {
 		super();
 		stormpath = new Stormpath();
+		googleDrive = new GoogleDrive();
 
 		// TODO Auto-generated constructor stub
 	}
@@ -70,6 +86,10 @@ public class Controller extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
+		System.out.println(request.getParameter("code"));
+		googleDrive.initDrive(request.getParameter("code"), "http://localhost:8080/COMP9323/controller");
+		RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/"+"driveready.jsp");
+		dispatcher.forward(request, response);
 	}
 
 	/**
@@ -80,25 +100,103 @@ public class Controller extends HttpServlet {
 		String forwardPage = "";
 		String action = request.getParameter("action");
 		HttpSession session = request.getSession(true); 
+		boolean isMultipart = ServletFileUpload.isMultipartContent(request);
 
-		if(action==null){
-			logger.info("invalid action");
+		if (isMultipart){
+			forwardPage = uploadFile(request, response, session);
 		}else{
-			if (action.equals("login")){
-				forwardPage = login(request, response, session);
-			}else if (action.equals("register")){
-				forwardPage = register(request, response, session);
-			}else if (action.equals("create_account")){
-				forwardPage = createAccount(request, response, session);
-			}else if (action.equals("get_details")){
-				forwardPage = getDetails(request, response, session);
-			}else if (action.equals("set_password")){
-				forwardPage = setPassword(request, response, session);
+			if(action==null){
+				logger.info("invalid action");
+				System.out.println(request.getParameterNames());
+			}else{
+				if (action.equals("login")){
+					forwardPage = login(request, response, session);
+				}else if (action.equals("register")){
+					forwardPage = register(request, response, session);
+				}else if (action.equals("create_account")){
+					forwardPage = createAccount(request, response, session);
+				}else if (action.equals("get_details")){
+					forwardPage = getDetails(request, response, session);
+				}else if (action.equals("set_password")){
+					forwardPage = setPassword(request, response, session);
+				}
 			}
 		}
 
+
 		RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/"+forwardPage);
 		dispatcher.forward(request, response);
+	}
+
+	private String uploadFile(HttpServletRequest request,
+			HttpServletResponse response, HttpSession session) {
+		// TODO Auto-generated method stub
+
+		// gets absolute path of the web application
+		String appPath = request.getServletContext().getRealPath("");
+		// constructs path of the directory to save uploaded file
+		String savePath = appPath + File.separator + SAVE_DIR;
+
+		// creates the save directory if it does not exists
+		File fileSaveDir = new File(savePath);
+		if (!fileSaveDir.exists()) {
+			fileSaveDir.mkdir();
+		}
+
+		try {
+			for (Part part : request.getParts()) {
+				String fileName = extractFileName(part);
+				if (fileName != null){
+					System.out.println("Saving to " + savePath + File.separator + fileName);
+					part.write(savePath + File.separator + fileName);
+					System.out.println(savePath + File.separator + fileName);
+					com.google.api.services.drive.model.File body = new com.google.api.services.drive.model.File();
+					body.setTitle(extractFileName(part));
+					body.setDescription("A test document");
+					body.setMimeType(part.getContentType());
+
+					java.io.File fileContent = new File(savePath + File.separator + fileName);;
+					FileContent mediaContent = new FileContent("text/plain", fileContent);
+					
+
+					googleDrive.send(body, mediaContent);
+				}
+
+
+			}
+		} catch (IllegalStateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServletException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+
+
+
+		System.out.println("Done!");
+		request.setAttribute("message", "Successfully Uploaded File");
+		return "uploadfile.jsp";
+	}
+
+	/**
+	 * Extracts file name from HTTP header content-disposition
+	 */
+	private String extractFileName(Part part) {
+		String contentDisp = part.getHeader("content-disposition");
+		String[] items = contentDisp.split(";");
+		for (String s : items) {
+			if (s.trim().startsWith("filename")) {
+				String whole = s.substring(s.indexOf("=") + 2, s.length()-1);
+				String[] split = whole.replace('\\', '/').split("/");
+				return split[split.length-1];
+			}
+		}
+		return null;
 	}
 
 	private String setPassword(HttpServletRequest request,

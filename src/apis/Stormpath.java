@@ -18,6 +18,7 @@ import com.stormpath.sdk.authc.AuthenticationResult;
 import com.stormpath.sdk.authc.UsernamePasswordRequest;
 import com.stormpath.sdk.client.ApiKey;
 import com.stormpath.sdk.client.ApiKeys;
+import com.stormpath.sdk.client.AuthenticationScheme;
 import com.stormpath.sdk.client.Client;
 import com.stormpath.sdk.client.Clients;
 import com.stormpath.sdk.directory.Directory;
@@ -41,12 +42,15 @@ public class Stormpath implements UserManagement{
 	public static final String TeacherGroup = "Teacher";
 	
 	public Stormpath(){
-		String path = "C:\\Users\\Ervin\\Downloads\\apiKey.properties";
+		String path = "C:\\Users\\Ervin\\workspace\\COMP9323\\WebContent\\apiKey.properties";
 		logger.info(path);
 
 		@SuppressWarnings("deprecation")
 		ApiKey apiKey = ApiKeys.builder().setFileLocation(path).build();
-		this.client = Clients.builder().setApiKey(apiKey).build();
+		//this.client = Clients.builder().setApiKey(apiKey).build();
+		client = Clients.builder().setApiKey(apiKey)
+			    .setAuthenticationScheme(AuthenticationScheme.BASIC)
+			    .build();
 
 
 		initApplication();
@@ -60,8 +64,10 @@ public class Stormpath implements UserManagement{
 		try {
 		    UsernamePasswordRequest authenticationRequest = new UsernamePasswordRequest(user, pass);
 		    AuthenticationResult result = application.authenticateAccount(authenticationRequest);
-		    //account = result.getAccount();
-		    authenticated = true;
+		    Account account = result.getAccount();
+		    if (account != null){
+		    	authenticated = true;
+		    }
 		} catch (ResourceException ex) {
 		    System.out.println(ex.getStatus()); // Will output: 400
 		    System.out.println(ex.getCode()); // Will output: 400
@@ -78,7 +84,7 @@ public class Stormpath implements UserManagement{
 		Directory accountStore = client.instantiate(Directory.class);
 
 		Directory currentDir = null;
-		Iterator directories= client.getDirectories().iterator();
+		Iterator<Directory> directories= client.getDirectories().iterator();
 		found = false;
 		while (directories.hasNext() && !found){
 			currentDir = (Directory) directories.next();
