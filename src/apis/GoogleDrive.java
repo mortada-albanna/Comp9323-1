@@ -136,13 +136,28 @@ public class GoogleDrive {
 	static Credential getStoredCredentials(String userId) {
 		// TODO: Implement this method to work with your database. Instantiate a new
 		// Credential instance with stored accessToken and refreshToken.
-		throw new UnsupportedOperationException();
-		/*Credential cred = new GoogleCredential();
-		File file = new File("credentials.txt");
-		FileInputStream fis = new FileInputStream(file);
-		FileReader fr = new FileReader(file);
-		fr.r
-		cred.setAccessToken(fis.re)*/
+		Credential cred = new GoogleCredential();
+		File file = new File ("credentials.txt");
+		try {
+			cred.setAccessToken(readRow(file));
+			cred.setRefreshToken(readRow(file));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return cred;
+	}
+	
+	private static String readRow (File file) throws IOException{
+		String row = "";
+		FileInputStream stream = new FileInputStream(file);
+		int in = stream.read();
+		while (in != '\n'){
+			row = row.concat(Integer.toString(in));
+		}
+		
+		return row;
 	}
 
 	/**

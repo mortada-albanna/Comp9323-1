@@ -8,6 +8,6 @@
 </head>
 <body>
 <h1>Drive is now Ready</h1>
-Go to <a href="uploadfile.jsp">here</a> to start
+Go to <a href="login.jsp">here</a> to start
 </body>
 </html>

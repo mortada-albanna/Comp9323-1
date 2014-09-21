@@ -237,7 +237,7 @@ public class Stormpath implements UserManagement{
 	}
 
 	@Override
-	public ArrayList<String> getAurhorizationGroup(String username) {
+	public ArrayList<String> getAuthorizationGroup(String username) {
 		// TODO Auto-generated method stub
 		ArrayList<String> groupList = new ArrayList<String>();
 		AccountList accounts = application.getAccounts();

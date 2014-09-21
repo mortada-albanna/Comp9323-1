@@ -4,14 +4,14 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<title>Test Oauth</title>
+<title>Set Up Drive</title>
 </head>
 <body>
-
+This will prompt you to log into your gooogle drive.
 <form method="post" action="OAuthController">
 
 
-<input type="submit" value="Test!">
+<input type="submit" value="Launch!">
 
 </form>
 

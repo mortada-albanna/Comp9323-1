@@ -160,6 +160,7 @@ public class Controller extends HttpServlet {
 					
 
 					googleDrive.send(body, mediaContent);
+					fileContent.delete();
 				}
 
 
@@ -180,7 +181,7 @@ public class Controller extends HttpServlet {
 
 		System.out.println("Done!");
 		request.setAttribute("message", "Successfully Uploaded File");
-		return "uploadfile.jsp";
+		return request.getRequestURI();
 	}
 
 	/**
@@ -228,7 +229,9 @@ public class Controller extends HttpServlet {
 		// TODO Auto-generated method stub
 		String forwardPage = null;
 		if (stormpath.authenticateAccount(request.getParameter("username"), request.getParameter("password"))){
-			forwardPage = "WEB-INF/welcome.jsp";
+			forwardPage = "uploadfile.jsp";
+			session.setAttribute("user", request.getParameter("username"));
+			session.setAttribute("group", stormpath.getAuthorizationGroup(request.getParameter("username")));
 		}else{
 			forwardPage = "login.jsp";
 			request.setAttribute("message", "login attempt failed.");

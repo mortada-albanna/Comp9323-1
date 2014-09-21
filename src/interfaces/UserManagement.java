@@ -15,12 +15,13 @@ public interface UserManagement {
 
 		public boolean setPassword(String username, String password) ;
 		
-		public ArrayList<String> getAurhorizationGroup(String username) ;
+		public ArrayList<String> getAuthorizationGroup(String username) ;
 		
-		public ArrayList<Permission> getPermission (String user);
 		/*
 		 * Will return some Permissions that has a name eg Assignment 1 and some permissions
 		 * with it in an array eg [Permission.WRITE, Permission.READ]
 		 */
+		public ArrayList<Permission> getPermission (String user);
+		
 
 }
