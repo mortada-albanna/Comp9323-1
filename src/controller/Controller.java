@@ -181,7 +181,7 @@ public class Controller extends HttpServlet {
 
 		System.out.println("Done!");
 		request.setAttribute("message", "Successfully Uploaded File");
-		return request.getRequestURI();
+		return "WEB-INF/welcome.jsp";
 	}
 
 	/**
@@ -229,7 +229,7 @@ public class Controller extends HttpServlet {
 		// TODO Auto-generated method stub
 		String forwardPage = null;
 		if (stormpath.authenticateAccount(request.getParameter("username"), request.getParameter("password"))){
-			forwardPage = "uploadfile.jsp";
+			forwardPage = "WEB-INF/welcome.jsp";
 			session.setAttribute("user", request.getParameter("username"));
 			session.setAttribute("group", stormpath.getAuthorizationGroup(request.getParameter("username")));
 		}else{
