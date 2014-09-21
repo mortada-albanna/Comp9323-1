@@ -1,5 +1,5 @@
 package apis;
-
+import other.Constants;
 import interfaces.UserManagement;
 
 import java.io.File;
@@ -42,7 +42,8 @@ public class Stormpath implements UserManagement{
 	public static final String TeacherGroup = "Teacher";
 	
 	public Stormpath(){
-		String path = "C:\\Users\\Ervin\\workspace\\COMP9323\\WebContent\\apiKey.properties";
+		
+		String path = Constants.APIKEY_PATH;
 		logger.info(path);
 
 		@SuppressWarnings("deprecation")

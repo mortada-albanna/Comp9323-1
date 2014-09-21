@@ -1,6 +1,6 @@
 package apis;
 
-
+import other.Constants;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeRequestUrl;
@@ -43,8 +43,6 @@ public class GoogleDrive {
 	//       "token_uri": "https://accounts.google.com/o/oauth2/token"
 	//     }
 	//   }
-	private static final String CLIENTSECRETS_LOCATION = "C:\\Users\\Ervin\\workspace\\COMP9323\\client_secret2.json";
-
 	private static final String REDIRECT_URI = "http://localhost:8080/COMP9323/controller";
 	private static final List<String> SCOPES = Arrays.asList(
 			"https://www.googleapis.com/auth/drive.file",
@@ -206,7 +204,7 @@ public class GoogleDrive {
 				public int read(char[] cbuf, int off, int len) throws IOException {
 					// TODO Auto-generated method stub
 					int value = -1;
-					java.io.File file = new File(CLIENTSECRETS_LOCATION); 
+					java.io.File file = new File(Constants.CLIENT_SECRET2_PATH); 
 					fis = new FileInputStream(file);
 					byte[] bites = new byte[len];
 					try{
