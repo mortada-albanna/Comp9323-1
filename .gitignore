@@ -2,6 +2,8 @@
 *.war
 *.ear
 *.class
+# Specific files
+src/other/Constants.java
 
 # eclipse specific git ignore
 *.pydevproject
