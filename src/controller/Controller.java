@@ -91,6 +91,8 @@ public class Controller extends HttpServlet {
 		try{
 			googleDrive.initDrive(request.getParameter("code"), "http://localhost:8080/COMP9323/controller");
 			RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/"+"driveready.jsp");
+			// TODO remove the printFiles call
+			googleDrive.printFiles();
 			dispatcher.forward(request, response);
 		}catch(NullPointerException e){
 			// Default go to login page or welcome page if you are logged in

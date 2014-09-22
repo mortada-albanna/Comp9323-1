@@ -1,6 +1,7 @@
 package apis;
 
 import other.Constants;
+
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeRequestUrl;
@@ -13,6 +14,8 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.Drive.Files;
+import com.google.api.services.drive.model.FileList;
 import com.google.api.services.oauth2.*;
 import com.google.api.services.oauth2.Oauth2.Userinfo;
 import com.google.api.services.oauth2.model.Userinfoplus;
@@ -24,8 +27,11 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.xml.bind.JAXBContext;
 
 
 
@@ -403,6 +409,28 @@ public class GoogleDrive {
 			e.printStackTrace();
 		}
 	}
+	public void printFiles()throws IOException{
+		List<com.google.api.services.drive.model.File> result = new ArrayList<com.google.api.services.drive.model.File>();
+		Files.List request = drive.files().list();
+		List<File> res = new ArrayList<File>();
+		do{
+			try {
+				FileList files = request.execute();
+				result.addAll(files.getItems());
+				request.setPageToken(files.getNextPageToken());
+			} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			}
+		}while( request.getPageToken() != null &&
+				request.getPageToken().length()> 0);
+		for(com.google.api.services.drive.model.File f: result){
+			System.out.println("file " + f.getTitle());
+		}
+		
+	}
+
+		
 
 	public void send(com.google.api.services.drive.model.File body, FileContent mediaContent) throws IOException{
 		drive.files().insert(body, mediaContent).execute();
