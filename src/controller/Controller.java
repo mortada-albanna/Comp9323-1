@@ -87,9 +87,27 @@ public class Controller extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
 		System.out.println(request.getParameter("code"));
-		googleDrive.initDrive(request.getParameter("code"), "http://localhost:8080/COMP9323/controller");
-		RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/"+"driveready.jsp");
-		dispatcher.forward(request, response);
+		// TODO not sure why it tries to access driveready here
+		try{
+			googleDrive.initDrive(request.getParameter("code"), "http://localhost:8080/COMP9323/controller");
+			RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/"+"driveready.jsp");
+			dispatcher.forward(request, response);
+		}catch(NullPointerException e){
+			// Default go to login page or welcome page if you are logged in
+			HttpSession session = request.getSession();
+			String user = (String)session.getAttribute("user");
+			String forwardPage="";
+			if( user == null){
+				forwardPage = login(request, response, session);
+			}else{
+				forwardPage = "WEB-INF/welcome.jsp";
+			}
+			System.out.println("doGet: user=" + user + " " + new Date(session.getLastAccessedTime()));
+			RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/"+forwardPage);
+			dispatcher.forward(request, response);
+
+		}
+		
 	}
 
 	/**
@@ -99,14 +117,15 @@ public class Controller extends HttpServlet {
 		// TODO Auto-generated method stub
 		String forwardPage = "";
 		String action = request.getParameter("action");
-		HttpSession session = request.getSession(true); 
+		HttpSession session = request.getSession(true);
 		boolean isMultipart = ServletFileUpload.isMultipartContent(request);
-
 		if (isMultipart){
 			forwardPage = uploadFile(request, response, session);
 		}else{
+			
 			if(action==null){
 				logger.info("invalid action");
+
 				System.out.println(request.getParameterNames());
 			}else{
 				if (action.equals("login")){
@@ -226,17 +245,20 @@ public class Controller extends HttpServlet {
 
 	private String login(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) {
-		// TODO Auto-generated method stub
 		String forwardPage = null;
-		if (stormpath.authenticateAccount(request.getParameter("username"), request.getParameter("password"))){
-			forwardPage = "WEB-INF/welcome.jsp";
-			session.setAttribute("user", request.getParameter("username"));
-			session.setAttribute("group", stormpath.getAuthorizationGroup(request.getParameter("username")));
+		if( session.getAttribute("user") == null){
+			if (stormpath.authenticateAccount(request.getParameter("username"), request.getParameter("password"))){
+				forwardPage = "WEB-INF/welcome.jsp";
+				session.setAttribute("user", request.getParameter("username"));
+				session.setAttribute("group", stormpath.getAuthorizationGroup(request.getParameter("username")));
+			}else{
+				forwardPage = "login.jsp";
+				request.setAttribute("message", "login attempt failed.");
+			}
 		}else{
-			forwardPage = "login.jsp";
-			request.setAttribute("message", "login attempt failed.");
+			forwardPage ="WEB-INF/welcome.jsp";
+			System.out.println("login: user = " + session.getAttribute("user"));
 		}
-
 
 		return forwardPage;
 	}
