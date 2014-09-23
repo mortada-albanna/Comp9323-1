@@ -229,13 +229,17 @@ public class Controller extends HttpServlet {
 	private String setPassword(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) {
 		// TODO Auto-generated method stub
+		if( session.getAttribute("user") == null){
+			return "login.jsp";
+		}
+		else{
 		if (stormpath.setPassword(request.getParameter("username"), request.getParameter("password"))){
 			request.setAttribute("message", "successfully changed password");
 		}else{
 			request.setAttribute("message", "could not find matching account");
 		}
 		return "setpassword.jsp";
-	}
+	}}
 
 	private String getDetails(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) {
