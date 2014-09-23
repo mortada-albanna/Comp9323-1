@@ -1,6 +1,7 @@
 package apis;
 
 import other.Constants;
+import other.FileDownloadLink;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
@@ -9,12 +10,15 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.http.FileContent;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.Drive.Files;
+import com.google.api.services.drive.Drive.Files.Get;
 import com.google.api.services.drive.model.FileList;
 import com.google.api.services.oauth2.*;
 import com.google.api.services.oauth2.Oauth2.Userinfo;
@@ -26,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -425,8 +430,33 @@ public class GoogleDrive {
 		}while( request.getPageToken() != null &&
 				request.getPageToken().length()> 0);
 		for(com.google.api.services.drive.model.File f: result){
-			System.out.println("file " + f.getTitle());
+			System.out.println("file " + f.getTitle() + " has id " + f.getId() + " link: " + f.getWebContentLink());
 		}
+		
+	}
+	
+	
+	public ArrayList<FileDownloadLink> getFileDownloadLinks()throws IOException{
+		List<com.google.api.services.drive.model.File> result = new ArrayList<com.google.api.services.drive.model.File>();
+		ArrayList<FileDownloadLink> links = new ArrayList<FileDownloadLink>();
+		Files.List request = drive.files().list();
+		List<File> res = new ArrayList<File>();
+		do{
+			try {
+				FileList files = request.execute();
+				result.addAll(files.getItems());
+				request.setPageToken(files.getNextPageToken());
+			} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			}
+		}while( request.getPageToken() != null &&
+				request.getPageToken().length()> 0);
+		for(com.google.api.services.drive.model.File f: result){
+			links.add(new FileDownloadLink(f.getTitle(), f.getWebContentLink()));
+		}
+		
+		return links;
 		
 	}
 
@@ -435,4 +465,30 @@ public class GoogleDrive {
 	public void send(com.google.api.services.drive.model.File body, FileContent mediaContent) throws IOException{
 		drive.files().insert(body, mediaContent).execute();
 	}
+	
+	/**
+	   * Download a file's content.
+	   * 
+	   * @param service Drive API service instance.
+	   * @param file Drive File instance.
+	   * @return InputStream containing the file's content if successful,
+	   *         {@code null} otherwise.
+	   */
+	  public InputStream downloadFile(com.google.api.services.drive.model.File file) {
+	    if (file.getDownloadUrl() != null && file.getDownloadUrl().length() > 0) {
+	      try {
+	        HttpResponse resp =
+	            drive.getRequestFactory().buildGetRequest(new GenericUrl(file.getDownloadUrl()))
+	                .execute();
+	        return resp.getContent();
+	      } catch (IOException e) {
+	        // An error occurred.
+	        e.printStackTrace();
+	        return null;
+	      }
+	    } else {
+	      // The file doesn't have any content stored on Drive.
+	      return null;
+	    }
+	  }
 }

@@ -39,11 +39,14 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
 
 import java.util.*;
+
 import javax.mail.*;
 import javax.mail.internet.*;
 import javax.activation.*;
 
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
+
+
 
 
 import com.stormpath.sdk.account.Account;
@@ -134,6 +137,10 @@ public class Controller extends HttpServlet {
 					forwardPage = login(request, response, session);
 				}else if (action.equals("register")){
 					forwardPage = register(request, response, session);
+				}else if (action.equals("download")){
+					forwardPage = download(request, response, session);
+				}else if (action.equals("list_files")){
+					forwardPage = listFiles(request, response, session);
 				}else if (action.equals("create_account")){
 					forwardPage = createAccount(request, response, session);
 				}else if (action.equals("get_details")){
@@ -147,6 +154,22 @@ public class Controller extends HttpServlet {
 
 		RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/"+forwardPage);
 		dispatcher.forward(request, response);
+	}
+
+	private String download(HttpServletRequest request, HttpServletResponse response, HttpSession session) {
+		// TODO Auto-generated method stub
+		return "downloadFile.jsp";
+	}
+
+	private String listFiles(HttpServletRequest request, HttpServletResponse response, HttpSession session) {
+		// TODO Auto-generated method stub
+		try {
+			request.setAttribute("links", googleDrive.getFileDownloadLinks());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return "listFiles.jsp";
 	}
 
 	private String uploadFile(HttpServletRequest request,
