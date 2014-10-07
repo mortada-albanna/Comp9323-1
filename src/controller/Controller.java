@@ -265,9 +265,6 @@ public class Controller extends HttpServlet {
 
 	private String createAccount(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) {
-		// TODO Auto-generated method stub
-
-		String forwardpage = null;
 
 		//Set the account properties
 		String givenName = request.getParameter("given_name");
@@ -279,9 +276,6 @@ public class Controller extends HttpServlet {
 		if (password.equals(password2)){
 			stormpath.createAccount(givenName, surname, userName, password, email, "Student");
 			request.setAttribute("message", "Registration Successful!");
-			forwardpage = "login.jsp";
-		}else{
-			forwardpage = "createaccount.jsp";
 		}
 
 

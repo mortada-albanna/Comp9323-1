@@ -161,6 +161,7 @@ public class GoogleDrive {
 		while (in != '\n'){
 			row = row.concat(Integer.toString(in));
 		}
+		stream.close();
 		
 		return row;
 	}
@@ -413,7 +414,6 @@ public class GoogleDrive {
 	public void printFiles()throws IOException{
 		List<com.google.api.services.drive.model.File> result = new ArrayList<com.google.api.services.drive.model.File>();
 		Files.List request = drive.files().list();
-		List<File> res = new ArrayList<File>();
 		do{
 			try {
 				FileList files = request.execute();
@@ -436,7 +436,6 @@ public class GoogleDrive {
 		List<com.google.api.services.drive.model.File> result = new ArrayList<com.google.api.services.drive.model.File>();
 		ArrayList<FileDownloadLink> links = new ArrayList<FileDownloadLink>();
 		Files.List request = drive.files().list();
-		List<File> res = new ArrayList<File>();
 		do{
 			try {
 				FileList files = request.execute();
@@ -486,75 +485,5 @@ public class GoogleDrive {
 	      // The file doesn't have any content stored on Drive.
 	      return null;
 	    }
-	  }
-	  
-	  /**taken from http://stackoverflow.com/questions/18150073/how-to-create-folders-in-google-drive-without-duplicate
-	     * 
-	     * @param service google drive instance
-	     * @param title the title (name) of the folder (the one you search for)
-	     * @param parentId the parent Id of this folder (use root) if the folder is in the main directory of google drive
-	     * @return google drive file object 
-	     * @throws IOException
-	     */
-	    private com.google.api.services.drive.model.File getExistsFolder(String title,String parentId) throws IOException 
-	    {
-	        Drive.Files.List request;
-	        request = drive.files().list();
-	        String query = "mimeType='application/vnd.google-apps.folder' AND trashed=false AND title='" + title + "' AND '" + parentId + "' in parents";
-	        System.out.println("isFolderExists(): Query= " + query);
-	        request = request.setQ(query);
-	        FileList files = request.execute();
-	        System.out.println("isFolderExists(): List Size =" + files.getItems().size());
-	        if (files.getItems().size() == 0) //if the size is zero, then the folder doesn't exist
-	            return null;
-	        else
-	            //since google drive allows to have multiple folders with the same title (name)
-	            //we select the first file in the list to return
-	            return files.getItems().get(0);
-	    }
-	  
-	  /**taken from http://stackoverflow.com/questions/18150073/how-to-create-folders-in-google-drive-without-duplicate
-	   * 
-	   * @param service google drive instance
-	   * @param title the folder's title
-	   * @param listParentReference the list of parents references where you want the folder to be created, 
-	   * if you have more than one parent references, then a folder will be created in each one of them  
-	   * @return google drive file object   
-	   * @throws IOException
-	   */
-	  private com.google.api.services.drive.model.File createFolder(String title,List<ParentReference> listParentReference) throws IOException
-	  {
-		  com.google.api.services.drive.model.File body = new com.google.api.services.drive.model.File();
-	      body.setTitle(title);
-	      body.setParents(listParentReference);
-	      body.setMimeType("application/vnd.google-apps.folder");
-	      com.google.api.services.drive.model.File file = drive.files().insert(body).execute(); 
-	      return file;
-
-	  }
-	  
-	  /**taken from http://stackoverflow.com/questions/18150073/how-to-create-folders-in-google-drive-without-duplicate
-	   * 
-	   * @param service google drive instance
-	   * @param titles list of folders titles 
-	   * i.e. if your path like this folder1/folder2/folder3 then pass them in this order createFoldersPath(service, folder1, folder2, folder3)
-	   * @return parent reference of the last added folder in case you want to use it to create a file inside this folder.
-	   * @throws IOException
-	   */
-	  private List<ParentReference> createFoldersPath(String...titles) throws IOException
-	  {
-	      List<ParentReference> listParentReference = new ArrayList<ParentReference>();
-	      com.google.api.services.drive.model.File file = null;
-	      for(int i=0;i<titles.length;i++)
-	      {
-	          file = getExistsFolder(titles[i], (file==null)?"root":file.getId());
-	          if (file == null)
-	          {
-	              file = createFolder(titles[i], listParentReference);
-	          }
-	          listParentReference.clear();
-	          listParentReference.add(new ParentReference().setId(file.getId()));
-	      }
-	      return listParentReference;
 	  }
 }

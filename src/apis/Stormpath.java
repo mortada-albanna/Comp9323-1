@@ -32,7 +32,7 @@ public class Stormpath implements UserManagement{
 	static Logger logger = Logger.getLogger(Controller.class.getName());
 	private Client client = null;
 	private Application application = null;
-	private Directory directory = null;	
+	private Directory directory = null;
 	public static final String StudentGroup = "Student";
 	public static final String TeacherGroup = "Teacher";
 	
@@ -107,7 +107,7 @@ public class Stormpath implements UserManagement{
 	}
 
 	private void initApplication() {
-		Iterator applications = client.getApplications().iterator();
+		Iterator<Application> applications = client.getApplications().iterator();
 		Application current = null;
 		boolean found = false;
 		while (applications.hasNext() && !found){
@@ -142,7 +142,7 @@ public class Stormpath implements UserManagement{
 
 	private Account searchAccount(String username) {
 		boolean found = false;
-		Iterator accounts = application.getAccounts().iterator();
+		Iterator<Account> accounts = application.getAccounts().iterator();
 		Account current = null;
 		
 		while(accounts.hasNext() && !found){
@@ -236,7 +236,6 @@ public class Stormpath implements UserManagement{
 	public ArrayList<String> getAuthorizationGroup(String username) {
 		// TODO Auto-generated method stub
 		ArrayList<String> groupList = new ArrayList<String>();
-		AccountList accounts = application.getAccounts();
 		
 		for (Group group:searchAccount(username).getGroups()){
 			groupList.add(group.getName());
