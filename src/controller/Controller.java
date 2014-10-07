@@ -188,8 +188,14 @@ public class Controller extends HttpServlet {
 		}
 
 		try {
+			
 			for (Part part : request.getParts()) {
 				String fileName = extractFileName(part);
+				if(  fileName != null && fileName.matches(".*[^a-zA-Z0-9_].*") ){
+					request.setAttribute("message", "Filename contained illegal characthers");
+					return "WEB-INF/welcome.jsp";
+				
+				}
 				if (fileName != null){
 					System.out.println("Saving to " + savePath + File.separator + fileName);
 					part.write(savePath + File.separator + fileName);
