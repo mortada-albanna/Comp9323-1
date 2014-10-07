@@ -21,6 +21,7 @@ import com.stormpath.sdk.client.ApiKeys;
 import com.stormpath.sdk.client.AuthenticationScheme;
 import com.stormpath.sdk.client.Client;
 import com.stormpath.sdk.client.Clients;
+import com.stormpath.sdk.directory.CustomData;
 import com.stormpath.sdk.directory.Directory;
 import com.stormpath.sdk.group.Group;
 import com.stormpath.sdk.group.GroupList;
@@ -142,7 +143,7 @@ public class Stormpath implements UserManagement{
 		// TODO Auto-generated method stub
 		Account current = searchAccount(username);
 		
-		return "Username: " + current.getUsername()+ "</br>Password: ";
+		return "Username: " + current.getUsername()+ "</br>Password: " + "</br>full name: "+current.getGivenName();
 	}
 
 	private Account searchAccount(String username) {
@@ -197,8 +198,8 @@ public class Stormpath implements UserManagement{
 			}
 		}
 		if (!found){
-			createGroup(StudentGroup, "authorization group for students");
-			createGroup(TeacherGroup, "authorization group for teachers");
+			createGroup(StudentGroup, "authorization group for students", "write");
+			createGroup(TeacherGroup, "authorization group for teachers", "read");
 		}
 
 	}
@@ -227,12 +228,13 @@ public class Stormpath implements UserManagement{
 		
 	}
 
-	private void createGroup(String groupName, String description){
+	private void createGroup(String groupName, String description, String permission){
 		Group group = client.instantiate(Group.class)
 				.setName(groupName)
 				.setDescription(description)
 				.setStatus(GroupStatus.ENABLED);
-
+		CustomData customData = group.getCustomData();
+		customData.put("permission", permission);
 		application.createGroup(group);
 
 	}
