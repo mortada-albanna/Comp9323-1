@@ -66,7 +66,7 @@ public class GoogleDrive {
 	 * Exception thrown when an error occurred while retrieving credentials.
 	 */
 	public static class GetCredentialsException extends Exception {
-
+		static final long serialVersionUID = 42L;
 		protected String authorizationUrl;
 
 		/**
@@ -97,7 +97,7 @@ public class GoogleDrive {
 	 * Exception thrown when a code exchange has failed.
 	 */
 	public static class CodeExchangeException extends GetCredentialsException {
-
+		static final long serialVersionUID = 42L;
 		/**
 		 * Construct a CodeExchangeException.
 		 *
@@ -113,7 +113,7 @@ public class GoogleDrive {
 	 * Exception thrown when no refresh token has been found.
 	 */
 	public static class NoRefreshTokenException extends GetCredentialsException {
-
+		static final long serialVersionUID = 42L;
 		/**
 		 * Construct a NoRefreshTokenException.
 		 *
@@ -129,6 +129,7 @@ public class GoogleDrive {
 	 * Exception thrown when no user ID could be retrieved.
 	 */
 	private static class NoUserIdException extends Exception {
+		static final long serialVersionUID = 42L;
 	}
 
 	/**
