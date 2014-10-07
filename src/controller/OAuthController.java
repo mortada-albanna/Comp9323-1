@@ -25,14 +25,12 @@ public class OAuthController extends AbstractAuthorizationCodeServlet {
      */
     public OAuthController() {
         super();
-        // TODO Auto-generated constructor stub
     }
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
 	}
 
 	/**
@@ -42,7 +40,6 @@ public class OAuthController extends AbstractAuthorizationCodeServlet {
 	@Override
 	protected String getRedirectUri(HttpServletRequest req)
 			throws ServletException, IOException {
-		// TODO Auto-generated method stub
 		GenericUrl url = new GenericUrl(req.getRequestURL().toString());
 	    url.setRawPath("/COMP9323/controller");
 	    return url.build();
@@ -51,14 +48,12 @@ public class OAuthController extends AbstractAuthorizationCodeServlet {
 	@Override
 	protected String getUserId(HttpServletRequest arg0)
 			throws ServletException, IOException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	protected AuthorizationCodeFlow initializeFlow() throws ServletException,
 			IOException {
-		// TODO Auto-generated method stub
 		return GoogleDrive.getFlow();
 	}
 
