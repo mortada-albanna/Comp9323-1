@@ -5,28 +5,8 @@ import interfaces.UserManagement;
 
 import java.io.File;
 import java.io.IOException;
-
-import apis.GoogleDrive;
-import apis.Stormpath;
-
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.http.FileContent;
-import com.stormpath.sdk.client.*;
-import com.stormpath.sdk.tenant.*;
-import com.stormpath.sdk.application.*;
-import com.stormpath.sdk.account.*;
-import com.stormpath.sdk.directory.*;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Properties;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -38,23 +18,12 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
 
-import java.util.*;
-
-import javax.mail.*;
-import javax.mail.internet.*;
-import javax.activation.*;
-
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 
+import apis.GoogleDrive;
+import apis.Stormpath;
 
-
-
-import com.stormpath.sdk.account.Account;
-import com.stormpath.sdk.application.Application;
-import com.stormpath.sdk.client.ApiKey;
-import com.stormpath.sdk.client.ApiKeys;
-import com.stormpath.sdk.client.Clients;
-import com.stormpath.sdk.directory.CustomData;
+import com.google.api.client.http.FileContent;
 
 
 /**

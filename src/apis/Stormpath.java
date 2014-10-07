@@ -1,13 +1,12 @@
 package apis;
-import other.Constants;
 import interfaces.UserManagement;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.logging.Logger;
+
+import other.Constants;
+import other.Permission;
 
 import com.stormpath.sdk.account.Account;
 import com.stormpath.sdk.account.AccountList;
@@ -28,10 +27,6 @@ import com.stormpath.sdk.group.GroupStatus;
 import com.stormpath.sdk.resource.ResourceException;
 
 import controller.Controller;
-
-import java.util.logging.Logger;
-
-import other.Permission;
 
 public class Stormpath implements UserManagement{
 	static Logger logger = Logger.getLogger(Controller.class.getName());
