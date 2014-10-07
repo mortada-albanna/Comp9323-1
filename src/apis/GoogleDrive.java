@@ -34,10 +34,6 @@ import com.google.api.services.oauth2.Oauth2;
 import com.google.api.services.oauth2.model.Userinfoplus;
 
 
-
-
-// ...
-
 public class GoogleDrive {
 
 	// Path to client_secrets.json which should contain a JSON document such as:
@@ -139,7 +135,6 @@ public class GoogleDrive {
 	 * @return Stored Credential if found, {@code null} otherwise.
 	 */
 	static Credential getStoredCredentials(String userId) {
-		// TODO: Implement this method to work with your database. Instantiate a new
 		// Credential instance with stored accessToken and refreshToken.
 		Credential cred = new GoogleCredential();
 		File file = new File ("credentials.txt");
@@ -147,7 +142,6 @@ public class GoogleDrive {
 			cred.setAccessToken(readRow(file));
 			cred.setRefreshToken(readRow(file));
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -173,7 +167,6 @@ public class GoogleDrive {
 	 * @param credentials The OAuth 2.0 credentials to store.
 	 */
 	static void storeCredentials(String userId, Credential credentials) {
-		// TODO: Implement this method to work with your database.
 		// Store the credentials.getAccessToken() and credentials.getRefreshToken()
 		// string values in your database.
 		File file = new File("credentials.txt");
@@ -187,10 +180,8 @@ public class GoogleDrive {
 			fos.write(refreshToken.getBytes());
 			fos.close();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -210,7 +201,6 @@ public class GoogleDrive {
 
 				@Override
 				public int read(char[] cbuf, int off, int len) throws IOException {
-					// TODO Auto-generated method stub
 					int value = -1;
 					java.io.File file = new File(Constants.CLIENT_SECRET2_PATH); 
 					fis = new FileInputStream(file);
@@ -231,7 +221,6 @@ public class GoogleDrive {
 
 				@Override
 				public void close() throws IOException {
-					// TODO Auto-generated method stub
 				}
 			};
 			GoogleClientSecrets clientSecrets = 
@@ -401,36 +390,13 @@ public class GoogleDrive {
 			drive = buildService(credentials);
 			System.out.println("Drive is now enabled");
 		} catch (CodeExchangeException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NoRefreshTokenException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-	public void printFiles()throws IOException{
-		List<com.google.api.services.drive.model.File> result = new ArrayList<com.google.api.services.drive.model.File>();
-		Files.List request = drive.files().list();
-		do{
-			try {
-				FileList files = request.execute();
-				result.addAll(files.getItems());
-				request.setPageToken(files.getNextPageToken());
-			} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			}
-		}while( request.getPageToken() != null &&
-				request.getPageToken().length()> 0);
-		for(com.google.api.services.drive.model.File f: result){
-			System.out.println("file " + f.getTitle() + " has id " + f.getId() + " link: " + f.getWebContentLink());
-		}
-		
-	}
-	
+	}	
 	
 	public ArrayList<FileDownloadLink> getFileDownloadLinks()throws IOException{
 		List<com.google.api.services.drive.model.File> result = new ArrayList<com.google.api.services.drive.model.File>();
@@ -442,7 +408,6 @@ public class GoogleDrive {
 				result.addAll(files.getItems());
 				request.setPageToken(files.getNextPageToken());
 			} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			}
 		}while( request.getPageToken() != null &&
