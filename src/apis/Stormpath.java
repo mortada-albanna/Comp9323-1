@@ -134,7 +134,6 @@ public class Stormpath implements UserManagement{
 
 
 	public String getDetails(String username) {
-		// TODO Auto-generated method stub
 		Account current = searchAccount(username);
 		
 		return "Username: " + current.getUsername()+ "</br>Password: ";
@@ -155,7 +154,6 @@ public class Stormpath implements UserManagement{
 	}
 
 	public boolean setPassword(String username, String password) {
-		// TODO Auto-generated method stub
 		boolean found = false;
 		Account current = searchAccount(username);
 		if (current != null){
@@ -169,7 +167,6 @@ public class Stormpath implements UserManagement{
 	@Override
 	public void createAccount(String givenName, String surname, String username, 
 			String password, String email, String group) {
-		// TODO Auto-generated method stub
 		Account newAccount = client.instantiate(Account.class);
 		newAccount.setGivenName(givenName);
 		newAccount.setSurname(surname);
@@ -182,7 +179,6 @@ public class Stormpath implements UserManagement{
 		
 	}
 	private void initAuthorizationGroups() {
-		// TODO Auto-generated method stub
 		boolean found = false;
 		GroupList groups = application.getGroups();
 		for(Group group : groups) {
@@ -234,7 +230,6 @@ public class Stormpath implements UserManagement{
 
 	@Override
 	public ArrayList<String> getAuthorizationGroup(String username) {
-		// TODO Auto-generated method stub
 		ArrayList<String> groupList = new ArrayList<String>();
 		
 		for (Group group:searchAccount(username).getGroups()){
