@@ -1,10 +1,16 @@
 package controller;
 
 
+import interfaces.UserManagement;
+
+import java.io.File;
 import java.io.IOException;
 
+import apis.GoogleDrive;
 import apis.Stormpath;
 
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.http.FileContent;
 import com.stormpath.sdk.client.*;
 import com.stormpath.sdk.tenant.*;
 import com.stormpath.sdk.application.*;
@@ -24,16 +30,24 @@ import java.util.regex.Pattern;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.Part;
 
 import java.util.*;
+
 import javax.mail.*;
 import javax.mail.internet.*;
 import javax.activation.*;
+
+import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
+
+
+
 
 import com.stormpath.sdk.account.Account;
 import com.stormpath.sdk.application.Application;
@@ -47,14 +61,17 @@ import com.stormpath.sdk.directory.CustomData;
  * Servlet implementation class Controller
  */
 @WebServlet("/controller")
+@MultipartConfig(
+		fileSizeThreshold=1024*1024*10, // 10MB
+		maxFileSize=1024*1024*20,      // 20MB
+		maxRequestSize=1024*1024*50)   // 50MB
 public class Controller extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	static Logger logger = Logger.getLogger(Controller.class.getName());
 
-	private Stormpath stormpath;
-	private Application application;
-	private Directory directory;
-	private Client client;
+	private UserManagement stormpath;
+	private GoogleDrive googleDrive;
+	private static final String SAVE_DIR = "uploads";
 
 	/**
 	 * @see HttpServlet#HttpServlet()
@@ -62,9 +79,7 @@ public class Controller extends HttpServlet {
 	public Controller() {
 		super();
 		stormpath = new Stormpath();
-		application = stormpath.getApplication();
-		directory = stormpath.getDirectory();
-		client = stormpath.getClient();
+		googleDrive = new GoogleDrive();
 
 		// TODO Auto-generated constructor stub
 	}
@@ -74,6 +89,30 @@ public class Controller extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
+		System.out.println(request.getParameter("code"));
+		// TODO not sure why it tries to access driveready here
+		try{
+			googleDrive.initDrive(request.getParameter("code"), "http://localhost:8080/COMP9323/controller");
+			RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/"+"driveready.jsp");
+			// TODO remove the printFiles call
+			googleDrive.printFiles();
+			dispatcher.forward(request, response);
+		}catch(NullPointerException e){
+			// Default go to login page or welcome page if you are logged in
+			HttpSession session = request.getSession();
+			String user = (String)session.getAttribute("user");
+			String forwardPage="";
+			if( user == null){
+				forwardPage = login(request, response, session);
+			}else{
+				forwardPage = "WEB-INF/welcome.jsp";
+			}
+			System.out.println("doGet: user=" + user + " " + new Date(session.getLastAccessedTime()));
+			RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/"+forwardPage);
+			dispatcher.forward(request, response);
+
+		}
+		
 	}
 
 	/**
@@ -83,26 +122,132 @@ public class Controller extends HttpServlet {
 		// TODO Auto-generated method stub
 		String forwardPage = "";
 		String action = request.getParameter("action");
-		HttpSession session = request.getSession(true); 
-
-		if(action==null){
-			logger.info("invalid action");
+		HttpSession session = request.getSession(true);
+		boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+		if (isMultipart){
+			forwardPage = uploadFile(request, response, session);
 		}else{
-			if (action.equals("login")){
-				forwardPage = login(request, response, session);
-			}else if (action.equals("register")){
-				forwardPage = register(request, response, session);
-			}else if (action.equals("create_account")){
-				forwardPage = createAccount(request, response, session);
-			}else if (action.equals("get_details")){
-				forwardPage = getDetails(request, response, session);
-			}else if (action.equals("set_password")){
-				forwardPage = setPassword(request, response, session);
+			
+			if(action==null){
+				logger.info("invalid action");
+
+				System.out.println(request.getParameterNames());
+			}else{
+				if (action.equals("login")){
+					forwardPage = login(request, response, session);
+				}else if (action.equals("register")){
+					forwardPage = register(request, response, session);
+				}else if (action.equals("download")){
+					forwardPage = download(request, response, session);
+				}else if (action.equals("list_files")){
+					forwardPage = listFiles(request, response, session);
+				}else if (action.equals("create_account")){
+					forwardPage = createAccount(request, response, session);
+				}else if (action.equals("get_details")){
+					forwardPage = getDetails(request, response, session);
+				}else if (action.equals("set_password")){
+					forwardPage = setPassword(request, response, session);
+				}
 			}
 		}
 
+
 		RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/"+forwardPage);
 		dispatcher.forward(request, response);
+	}
+
+	private String download(HttpServletRequest request, HttpServletResponse response, HttpSession session) {
+		// TODO Auto-generated method stub
+		return "downloadFile.jsp";
+	}
+
+	private String listFiles(HttpServletRequest request, HttpServletResponse response, HttpSession session) {
+		// TODO Auto-generated method stub
+		try {
+			request.setAttribute("links", googleDrive.getFileDownloadLinks());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return "listFiles.jsp";
+	}
+
+	private String uploadFile(HttpServletRequest request,
+			HttpServletResponse response, HttpSession session) {
+		// TODO Auto-generated method stub
+
+		// gets absolute path of the web application
+		String appPath = request.getServletContext().getRealPath("");
+		// constructs path of the directory to save uploaded file
+		String savePath = appPath + File.separator + SAVE_DIR;
+
+		// creates the save directory if it does not exists
+		File fileSaveDir = new File(savePath);
+		if (!fileSaveDir.exists()) {
+			fileSaveDir.mkdir();
+		}
+
+		try {
+			
+			for (Part part : request.getParts()) {
+				String fileName = extractFileName(part);
+				if(  fileName != null && fileName.matches(".*[^a-zA-Z0-9_].*") ){
+					request.setAttribute("message", "Filename contained illegal characthers");
+					return "WEB-INF/welcome.jsp";
+				
+				}
+				if (fileName != null){
+					System.out.println("Saving to " + savePath + File.separator + fileName);
+					part.write(savePath + File.separator + fileName);
+					System.out.println(savePath + File.separator + fileName);
+					com.google.api.services.drive.model.File body = new com.google.api.services.drive.model.File();
+					body.setTitle(extractFileName(part));
+					body.setDescription("A test document");
+					body.setMimeType(part.getContentType());
+
+					java.io.File fileContent = new File(savePath + File.separator + fileName);;
+					FileContent mediaContent = new FileContent("text/plain", fileContent);
+					
+
+					googleDrive.send(body, mediaContent);
+					fileContent.delete();
+				}
+
+
+			}
+		} catch (IllegalStateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServletException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+
+
+
+		System.out.println("Done!");
+		request.setAttribute("message", "Successfully Uploaded File");
+		return "WEB-INF/welcome.jsp";
+	}
+
+	/**
+	 * Extracts file name from HTTP header content-disposition
+	 */
+	private String extractFileName(Part part) {
+		String contentDisp = part.getHeader("content-disposition");
+		String[] items = contentDisp.split(";");
+		for (String s : items) {
+			if (s.trim().startsWith("filename")) {
+				String whole = s.substring(s.indexOf("=") + 2, s.length()-1);
+				String[] split = whole.replace('\\', '/').split("/");
+				return split[split.length-1];
+			}
+		}
+		return null;
 	}
 
 	private String setPassword(HttpServletRequest request,
@@ -131,15 +276,20 @@ public class Controller extends HttpServlet {
 
 	private String login(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) {
-		// TODO Auto-generated method stub
 		String forwardPage = null;
-		if (stormpath.authenticateAccount(request.getParameter("username"), request.getParameter("password")) != null){
-			forwardPage = "WEB-INF/welcome.jsp";
+		if( session.getAttribute("user") == null){
+			if (stormpath.authenticateAccount(request.getParameter("username"), request.getParameter("password"))){
+				forwardPage = "WEB-INF/welcome.jsp";
+				session.setAttribute("user", request.getParameter("username"));
+				session.setAttribute("group", stormpath.getAuthorizationGroup(request.getParameter("username")));
+			}else{
+				forwardPage = "login.jsp";
+				request.setAttribute("message", "login attempt failed.");
+			}
 		}else{
-			forwardPage = "login.jsp";
-			request.setAttribute("message", "login attempt failed.");
+			forwardPage ="WEB-INF/welcome.jsp";
+			System.out.println("login: user = " + session.getAttribute("user"));
 		}
-
 
 		return forwardPage;
 	}
@@ -149,23 +299,21 @@ public class Controller extends HttpServlet {
 		// TODO Auto-generated method stub
 
 		String forwardpage = null;
-		Account newAccount = client.instantiate(Account.class);
 
 		//Set the account properties
-		newAccount.setGivenName(request.getParameter("given_name"));
-		newAccount.setSurname(request.getParameter("surname"));
-		newAccount.setUsername(request.getParameter("email")); //optional, defaults to email if unset
-		newAccount.setEmail(request.getParameter("email"));
-		if (request.getParameter("password").equals(request.getParameter("password2"))){
-			newAccount.setPassword(request.getParameter("password"));
-			stormpath.createAccount(newAccount);
+		String givenName = request.getParameter("given_name");
+		String surname = request.getParameter("surname");
+		String userName = request.getParameter("email"); //optional, defaults to email if unset
+		String email = request.getParameter("email");
+		String password = request.getParameter("password");
+		String password2 = request.getParameter("password2");
+		if (password.equals(password2)){
+			stormpath.createAccount(givenName, surname, userName, password, email, "Student");
 			request.setAttribute("message", "Registration Successful!");
 			forwardpage = "login.jsp";
 		}else{
 			forwardpage = "createaccount.jsp";
 		}
-		CustomData customData = newAccount.getCustomData();
-		customData.put("favoriteColor", "white");
 
 
 		//Create the account using the existing Application object
