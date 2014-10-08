@@ -143,6 +143,8 @@ public class Stormpath implements UserManagement{
 		Account current = searchAccount(username);
 		
 		return "Username: " + current.getUsername()+ "</br>Password: ";
+		
+		
 	}
 
 	private Account searchAccount(String username) {
