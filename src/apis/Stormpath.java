@@ -1,13 +1,12 @@
 package apis;
-import other.Constants;
 import interfaces.UserManagement;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.logging.Logger;
+
+import other.Constants;
+import other.Permission;
 
 import com.stormpath.sdk.account.Account;
 import com.stormpath.sdk.account.AccountList;
@@ -29,15 +28,11 @@ import com.stormpath.sdk.resource.ResourceException;
 
 import controller.Controller;
 
-import java.util.logging.Logger;
-
-import other.Permission;
-
 public class Stormpath implements UserManagement{
 	static Logger logger = Logger.getLogger(Controller.class.getName());
 	private Client client = null;
 	private Application application = null;
-	private Directory directory = null;	
+	private Directory directory = null;
 	public static final String StudentGroup = "Student";
 	public static final String TeacherGroup = "Teacher";
 	
@@ -112,7 +107,7 @@ public class Stormpath implements UserManagement{
 	}
 
 	private void initApplication() {
-		Iterator applications = client.getApplications().iterator();
+		Iterator<Application> applications = client.getApplications().iterator();
 		Application current = null;
 		boolean found = false;
 		while (applications.hasNext() && !found){
@@ -139,7 +134,6 @@ public class Stormpath implements UserManagement{
 
 
 	public String getDetails(String username) {
-		// TODO Auto-generated method stub
 		Account current = searchAccount(username);
 		
 		return "Username: " + current.getUsername()+ "</br>Password: ";
@@ -149,7 +143,7 @@ public class Stormpath implements UserManagement{
 
 	private Account searchAccount(String username) {
 		boolean found = false;
-		Iterator accounts = application.getAccounts().iterator();
+		Iterator<Account> accounts = application.getAccounts().iterator();
 		Account current = null;
 		
 		while(accounts.hasNext() && !found){
@@ -162,7 +156,6 @@ public class Stormpath implements UserManagement{
 	}
 
 	public boolean setPassword(String username, String password) {
-		// TODO Auto-generated method stub
 		boolean found = false;
 		Account current = searchAccount(username);
 		if (current != null){
@@ -176,7 +169,6 @@ public class Stormpath implements UserManagement{
 	@Override
 	public void createAccount(String givenName, String surname, String username, 
 			String password, String email, String group) {
-		// TODO Auto-generated method stub
 		Account newAccount = client.instantiate(Account.class);
 		newAccount.setGivenName(givenName);
 		newAccount.setSurname(surname);
@@ -189,7 +181,6 @@ public class Stormpath implements UserManagement{
 		
 	}
 	private void initAuthorizationGroups() {
-		// TODO Auto-generated method stub
 		boolean found = false;
 		GroupList groups = application.getGroups();
 		for(Group group : groups) {
@@ -241,9 +232,7 @@ public class Stormpath implements UserManagement{
 
 	@Override
 	public ArrayList<String> getAuthorizationGroup(String username) {
-		// TODO Auto-generated method stub
 		ArrayList<String> groupList = new ArrayList<String>();
-		AccountList accounts = application.getAccounts();
 		
 		for (Group group:searchAccount(username).getGroups()){
 			groupList.add(group.getName());

@@ -5,28 +5,8 @@ import interfaces.UserManagement;
 
 import java.io.File;
 import java.io.IOException;
-
-import apis.GoogleDrive;
-import apis.Stormpath;
-
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.http.FileContent;
-import com.stormpath.sdk.client.*;
-import com.stormpath.sdk.tenant.*;
-import com.stormpath.sdk.application.*;
-import com.stormpath.sdk.account.*;
-import com.stormpath.sdk.directory.*;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Properties;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -38,23 +18,12 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
 
-import java.util.*;
-
-import javax.mail.*;
-import javax.mail.internet.*;
-import javax.activation.*;
-
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 
+import apis.GoogleDrive;
+import apis.Stormpath;
 
-
-
-import com.stormpath.sdk.account.Account;
-import com.stormpath.sdk.application.Application;
-import com.stormpath.sdk.client.ApiKey;
-import com.stormpath.sdk.client.ApiKeys;
-import com.stormpath.sdk.client.Clients;
-import com.stormpath.sdk.directory.CustomData;
+import com.google.api.client.http.FileContent;
 
 
 /**
@@ -81,21 +50,17 @@ public class Controller extends HttpServlet {
 		stormpath = new Stormpath();
 		googleDrive = new GoogleDrive();
 
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
 		System.out.println(request.getParameter("code"));
 		// TODO not sure why it tries to access driveready here
 		try{
 			googleDrive.initDrive(request.getParameter("code"), "http://localhost:8080/COMP9323/controller");
 			RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/"+"driveready.jsp");
-			// TODO remove the printFiles call
-			googleDrive.printFiles();
 			dispatcher.forward(request, response);
 		}catch(NullPointerException e){
 			// Default go to login page or welcome page if you are logged in
@@ -119,7 +84,6 @@ public class Controller extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
 		String forwardPage = "";
 		String action = request.getParameter("action");
 		HttpSession session = request.getSession(true);
@@ -133,40 +97,46 @@ public class Controller extends HttpServlet {
 
 				System.out.println(request.getParameterNames());
 			}else{
-				if (action.equals("login")){
+				switch (action){
+				case "login":
 					forwardPage = login(request, response, session);
-				}else if (action.equals("register")){
+					break;
+				case "register":
 					forwardPage = register(request, response, session);
-				}else if (action.equals("download")){
+					break;
+				case "download":
 					forwardPage = download(request, response, session);
-				}else if (action.equals("list_files")){
+					break;
+				case "list_files":
 					forwardPage = listFiles(request, response, session);
-				}else if (action.equals("create_account")){
+					break;
+				case "create_account":
 					forwardPage = createAccount(request, response, session);
-				}else if (action.equals("get_details")){
+					break;
+				case "get_details":
 					forwardPage = getDetails(request, response, session);
-				}else if (action.equals("set_password")){
+					break;
+				case "set_password":
 					forwardPage = setPassword(request, response, session);
+					break;
+				default:
+					//TODO return 404 not found
+					
 				}
 			}
 		}
-
-
 		RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/"+forwardPage);
 		dispatcher.forward(request, response);
 	}
 
 	private String download(HttpServletRequest request, HttpServletResponse response, HttpSession session) {
-		// TODO Auto-generated method stub
 		return "downloadFile.jsp";
 	}
 
 	private String listFiles(HttpServletRequest request, HttpServletResponse response, HttpSession session) {
-		// TODO Auto-generated method stub
 		try {
 			request.setAttribute("links", googleDrive.getFileDownloadLinks());
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return "listFiles.jsp";
@@ -174,7 +144,6 @@ public class Controller extends HttpServlet {
 
 	private String uploadFile(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) {
-		// TODO Auto-generated method stub
 
 		// gets absolute path of the web application
 		String appPath = request.getServletContext().getRealPath("");
@@ -216,13 +185,10 @@ public class Controller extends HttpServlet {
 
 			}
 		} catch (IllegalStateException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ServletException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -252,7 +218,6 @@ public class Controller extends HttpServlet {
 
 	private String setPassword(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) {
-		// TODO Auto-generated method stub
 		if (stormpath.setPassword(request.getParameter("username"), request.getParameter("password"))){
 			request.setAttribute("message", "successfully changed password");
 		}else{
@@ -263,14 +228,12 @@ public class Controller extends HttpServlet {
 
 	private String getDetails(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) {
-		// TODO Auto-generated method stub
 		request.setAttribute("message", stormpath.getDetails(request.getParameter("username")));
 		return "getdetails.jsp";
 	}
 
 	private String register(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) {
-		// TODO Auto-generated method stub
 		return "createaccount.jsp";
 	}
 
@@ -296,9 +259,6 @@ public class Controller extends HttpServlet {
 
 	private String createAccount(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) {
-		// TODO Auto-generated method stub
-
-		String forwardpage = null;
 
 		//Set the account properties
 		String givenName = request.getParameter("given_name");
@@ -310,9 +270,6 @@ public class Controller extends HttpServlet {
 		if (password.equals(password2)){
 			stormpath.createAccount(givenName, surname, userName, password, email, "Student");
 			request.setAttribute("message", "Registration Successful!");
-			forwardpage = "login.jsp";
-		}else{
-			forwardpage = "createaccount.jsp";
 		}
 
 

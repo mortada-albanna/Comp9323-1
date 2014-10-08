@@ -1,7 +1,5 @@
 package other;
 
-import com.sun.org.apache.bcel.internal.generic.GETFIELD;
-
 public class FileDownloadLink {
 	private String fileName = null;
 	private String downloadLink = null;
