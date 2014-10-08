@@ -59,7 +59,7 @@ public class Controller extends HttpServlet {
 		System.out.println(request.getParameter("code"));
 		// TODO not sure why it tries to access driveready here
 		try{
-			googleDrive.initDrive(request.getParameter("code"), "http://localhost:8080/COMP9323/controller");
+			googleDrive.initDrive(request.getParameter("code"));
 			RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/"+"driveready.jsp");
 			dispatcher.forward(request, response);
 		}catch(NullPointerException e){
@@ -129,10 +129,24 @@ public class Controller extends HttpServlet {
 		dispatcher.forward(request, response);
 	}
 
+	/**
+	 * Takes user to the downloadFile page
+	 * @param request
+	 * @param response
+	 * @param session
+	 * @return downloadFile page
+	 */
 	private String download(HttpServletRequest request, HttpServletResponse response, HttpSession session) {
 		return "downloadFile.jsp";
 	}
 
+	/**
+	 * Sets the "links" attribute to contain a list of FileDownloadLinks
+	 * @param request
+	 * @param response
+	 * @param session
+	 * @return listFile page
+	 */
 	private String listFiles(HttpServletRequest request, HttpServletResponse response, HttpSession session) {
 		try {
 			request.setAttribute("links", googleDrive.getFileDownloadLinks());
@@ -142,6 +156,13 @@ public class Controller extends HttpServlet {
 		return "listFiles.jsp";
 	}
 
+	/**
+	 * Uploads a file to the Google Drive
+	 * @param request
+	 * @param response
+	 * @param session
+	 * @return uploadFile page
+	 */
 	private String uploadFile(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) {
 
@@ -216,6 +237,13 @@ public class Controller extends HttpServlet {
 		return null;
 	}
 
+	/**
+	 * Sets the password for the account given
+	 * @param request
+	 * @param response
+	 * @param session
+	 * @return setPassword page
+	 */
 	private String setPassword(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) {
 		if (stormpath.setPassword(request.getParameter("username"), request.getParameter("password"))){
@@ -226,17 +254,38 @@ public class Controller extends HttpServlet {
 		return "setpassword.jsp";
 	}
 
+	/**
+	 * returns details of the given account in a string
+	 * @param request
+	 * @param response
+	 * @param session
+	 * @return getDetails page
+	 */
 	private String getDetails(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) {
 		request.setAttribute("message", stormpath.getDetails(request.getParameter("username")));
 		return "getdetails.jsp";
 	}
 
+	/**
+	 * Takes user to the registration page
+	 * @param request
+	 * @param response
+	 * @param session
+	 * @return createAccount page
+	 */
 	private String register(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) {
 		return "createaccount.jsp";
 	}
 
+	/**
+	 * Authenticates the user
+	 * @param request
+	 * @param response
+	 * @param session
+	 * @return welcome page
+	 */
 	private String login(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) {
 		String forwardPage = null;
@@ -257,6 +306,15 @@ public class Controller extends HttpServlet {
 		return forwardPage;
 	}
 
+	/**
+	 * Creates an account which defaults the username to the email.
+	 * Password needs to be non trivial ie. needs to contain upper and lower case letters with numbers and
+	 * special characters.
+	 * @param request
+	 * @param response
+	 * @param session
+	 * @return login page
+	 */
 	private String createAccount(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) {
 

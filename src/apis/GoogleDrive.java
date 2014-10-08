@@ -33,7 +33,11 @@ import com.google.api.services.drive.model.FileList;
 import com.google.api.services.oauth2.Oauth2;
 import com.google.api.services.oauth2.model.Userinfoplus;
 
-
+/** A Class to access the google drive api. Some code snippets were taken from code samples provided by Google
+ * 
+ * @author Ervin
+ *
+ */
 public class GoogleDrive {
 
 	// Path to client_secrets.json which should contain a JSON document such as:
@@ -45,17 +49,25 @@ public class GoogleDrive {
 	//       "token_uri": "https://accounts.google.com/o/oauth2/token"
 	//     }
 	//   }
-	private static final String REDIRECT_URI = "http://localhost:8080/COMP9323/controller";
+	/**
+	 * Scopes that OAuth needs to ask permissions for
+	 */
 	private static final List<String> SCOPES = Arrays.asList(
 			"https://www.googleapis.com/auth/drive.file",
 			"https://www.googleapis.com/auth/userinfo.email",
 			"https://www.googleapis.com/auth/userinfo.profile");
+	/**
+	 * Drive instance
+	 */
 	private Drive drive = null;
 
 	public GoogleDrive(){
 
 	}
 
+	/**
+	 * Google authorization flow
+	 */
 	private static GoogleAuthorizationCodeFlow flow = null;
 
 	/**
@@ -144,10 +156,10 @@ public class GoogleDrive {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		return cred;
 	}
-	
+
 	private static String readRow (File file) throws IOException{
 		String row = "";
 		FileInputStream stream = new FileInputStream(file);
@@ -156,7 +168,7 @@ public class GoogleDrive {
 			row = row.concat(Integer.toString(in));
 		}
 		stream.close();
-		
+
 		return row;
 	}
 
@@ -188,6 +200,7 @@ public class GoogleDrive {
 
 	/**
 	 * Build an authorization flow and store it as a static class attribute.
+	 * Requires the client secret path to be stored in constants class
 	 *
 	 * @return GoogleAuthorizationCodeFlow instance.
 	 * @throws IOException Unable to load client_secrets.json.
@@ -202,7 +215,7 @@ public class GoogleDrive {
 				@Override
 				public int read(char[] cbuf, int off, int len) throws IOException {
 					int value = -1;
-					java.io.File file = new File(Constants.CLIENT_SECRET2_PATH); 
+					java.io.File file = new File(Constants.CLIENT_SECRET_PATH); 
 					fis = new FileInputStream(file);
 					byte[] bites = new byte[len];
 					try{
@@ -246,7 +259,7 @@ public class GoogleDrive {
 		try {
 			GoogleAuthorizationCodeFlow flow = getFlow();
 			GoogleTokenResponse response =
-					flow.newTokenRequest(authorizationCode).setRedirectUri(REDIRECT_URI).execute();
+					flow.newTokenRequest(authorizationCode).setRedirectUri(Constants.REDIRECT_URI).execute();
 			return flow.createAndStoreCredential(response, null);
 		} catch (IOException e) {
 			System.err.println("An error occurred: " + e);
@@ -288,7 +301,7 @@ public class GoogleDrive {
 	 */
 	public static String getAuthorizationUrl(String emailAddress, String state) throws IOException {
 		GoogleAuthorizationCodeRequestUrl urlBuilder =
-				getFlow().newAuthorizationUrl().setRedirectUri(REDIRECT_URI).setState(state);
+				getFlow().newAuthorizationUrl().setRedirectUri(Constants.REDIRECT_URI).setState(state);
 		urlBuilder.set("user_id", emailAddress);
 		return urlBuilder.build();
 	}
@@ -383,10 +396,14 @@ public class GoogleDrive {
 		}
 	}
 
-	public void initDrive(String code, String redirectURL){
+	/** Connects to the drive once the Oauth code is given
+	 * 
+	 * @param code The code that is returned after logging in Google Drive
+	 */
+	public void initDrive(String code){
 		Credential credentials;
 		try {
-			credentials = getCredentials(code, redirectURL);
+			credentials = getCredentials(code, Constants.REDIRECT_URI);
 			drive = buildService(credentials);
 			System.out.println("Drive is now enabled");
 		} catch (CodeExchangeException e) {
@@ -397,7 +414,12 @@ public class GoogleDrive {
 			e.printStackTrace();
 		}
 	}	
-	
+
+	/** Returns an arraylist of all the download links in a drive
+	 * 
+	 * @return A List of FileDownloadLinks
+	 * @throws IOException
+	 */
 	public ArrayList<FileDownloadLink> getFileDownloadLinks()throws IOException{
 		List<com.google.api.services.drive.model.File> result = new ArrayList<com.google.api.services.drive.model.File>();
 		ArrayList<FileDownloadLink> links = new ArrayList<FileDownloadLink>();
@@ -408,47 +430,46 @@ public class GoogleDrive {
 				result.addAll(files.getItems());
 				request.setPageToken(files.getNextPageToken());
 			} catch (IOException e) {
-			e.printStackTrace();
+				e.printStackTrace();
 			}
 		}while( request.getPageToken() != null &&
 				request.getPageToken().length()> 0);
 		for(com.google.api.services.drive.model.File f: result){
 			links.add(new FileDownloadLink(f.getTitle(), f.getWebContentLink()));
 		}
-		
+
 		return links;
-		
+
 	}
 
-		
+
 
 	public void send(com.google.api.services.drive.model.File body, FileContent mediaContent) throws IOException{
 		drive.files().insert(body, mediaContent).execute();
 	}
-	
+
 	/**
-	   * Download a file's content.
-	   * 
-	   * @param service Drive API service instance.
-	   * @param file Drive File instance.
-	   * @return InputStream containing the file's content if successful,
-	   *         {@code null} otherwise.
-	   */
-	  public InputStream downloadFile(com.google.api.services.drive.model.File file) {
-	    if (file.getDownloadUrl() != null && file.getDownloadUrl().length() > 0) {
-	      try {
-	        HttpResponse resp =
-	            drive.getRequestFactory().buildGetRequest(new GenericUrl(file.getDownloadUrl()))
-	                .execute();
-	        return resp.getContent();
-	      } catch (IOException e) {
-	        // An error occurred.
-	        e.printStackTrace();
-	        return null;
-	      }
-	    } else {
-	      // The file doesn't have any content stored on Drive.
-	      return null;
-	    }
-	  }
+	 * Download a file's content.
+	 * 
+	 * @param file Drive File instance.
+	 * @return InputStream containing the file's content if successful,
+	 *         {@code null} otherwise.
+	 */
+	public InputStream downloadFile(com.google.api.services.drive.model.File file) {
+		if (file.getDownloadUrl() != null && file.getDownloadUrl().length() > 0) {
+			try {
+				HttpResponse resp =
+						drive.getRequestFactory().buildGetRequest(new GenericUrl(file.getDownloadUrl()))
+						.execute();
+				return resp.getContent();
+			} catch (IOException e) {
+				// An error occurred.
+				e.printStackTrace();
+				return null;
+			}
+		} else {
+			// The file doesn't have any content stored on Drive.
+			return null;
+		}
+	}
 }

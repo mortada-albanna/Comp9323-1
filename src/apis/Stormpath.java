@@ -27,15 +27,41 @@ import com.stormpath.sdk.group.GroupStatus;
 import com.stormpath.sdk.resource.ResourceException;
 
 import controller.Controller;
-
+/** Class to access the Stormpath API
+ * 
+ * @author Ervin
+ *
+ */
 public class Stormpath implements UserManagement{
+	/**
+	 * Error logger
+	 */
 	static Logger logger = Logger.getLogger(Controller.class.getName());
+	/**
+	 * API client
+	 */
 	private Client client = null;
+	/**
+	 * API application
+	 */
 	private Application application = null;
+	/**
+	 * API directory
+	 */
 	private Directory directory = null;
+	/**
+	 * Student group constant
+	 */
 	public static final String StudentGroup = "Student";
+	/**
+	 * Teacher group constant
+	 */
 	public static final String TeacherGroup = "Teacher";
 	
+	/** initializes the stormpath api as well as the application, directory and groups that are needed.
+	 * Uses a Constants class to determine where the apikey is.
+	 * You need to create a class called Constants with a field called APIKEY_PATH which contains a path to your apiKey.properties
+	 */
 	public Stormpath(){
 		
 		String path = Constants.APIKEY_PATH;
@@ -43,7 +69,6 @@ public class Stormpath implements UserManagement{
 
 		@SuppressWarnings("deprecation")
 		ApiKey apiKey = ApiKeys.builder().setFileLocation(path).build();
-		//this.client = Clients.builder().setApiKey(apiKey).build();
 		client = Clients.builder().setApiKey(apiKey)
 			    .setAuthenticationScheme(AuthenticationScheme.BASIC)
 			    .build();
@@ -74,7 +99,10 @@ public class Stormpath implements UserManagement{
 		
 		return authenticated;
 	}
-
+	
+	/** Initializes the default directory that the accounts get created into
+	 * 
+	 */
 	private void initDirectory() {
 		boolean found;
 		Directory accountStore = client.instantiate(Directory.class);
@@ -106,6 +134,9 @@ public class Stormpath implements UserManagement{
 		}
 	}
 
+	/** Initializes the application
+	 * 
+	 */
 	private void initApplication() {
 		Iterator<Application> applications = client.getApplications().iterator();
 		Application current = null;
@@ -139,6 +170,11 @@ public class Stormpath implements UserManagement{
 		return "Username: " + current.getUsername()+ "</br>Password: ";
 	}
 
+	/** Utility function that returns an account object given the account username
+	 * 
+	 * @param username The username of the account
+	 * @return Account The account object
+	 */
 	private Account searchAccount(String username) {
 		boolean found = false;
 		Iterator<Account> accounts = application.getAccounts().iterator();
@@ -153,6 +189,7 @@ public class Stormpath implements UserManagement{
 		return current;
 	}
 
+	@Override
 	public boolean setPassword(String username, String password) {
 		boolean found = false;
 		Account current = searchAccount(username);
@@ -178,6 +215,10 @@ public class Stormpath implements UserManagement{
 		addToGroup(newAccount, group);
 		
 	}
+	
+	/** Initializes Authorization groups
+	 * 
+	 */
 	private void initAuthorizationGroups() {
 		boolean found = false;
 		GroupList groups = application.getGroups();
@@ -194,6 +235,11 @@ public class Stormpath implements UserManagement{
 
 	}
 	
+	/** Adds an account to a group with just the name of the account
+	 * 
+	 * @param acc The name of the account
+	 * @param groupName The name of the group
+	 */
 	public void addToGroup(String acc, String groupName){
 		AccountList accounts = application.getAccounts();
 		for(Account account : accounts) {
@@ -203,6 +249,11 @@ public class Stormpath implements UserManagement{
 		}
 	}
 	
+	/** Adds an account to a group
+	 * 
+	 * @param acc an account object to add to the group
+	 * @param groupName the name of the group
+	 */
 	public void addToGroup(Account acc, String groupName){
 		GroupList groups = application.getGroups();
 		for(Group group : groups) {
@@ -217,7 +268,12 @@ public class Stormpath implements UserManagement{
 		}
 		
 	}
-
+	
+	/** Creates a general group eg. an authorization group
+	 * 
+	 * @param groupName the name of the group
+	 * @param description a general description of the group
+	 */
 	private void createGroup(String groupName, String description){
 		Group group = client.instantiate(Group.class)
 				.setName(groupName)
